@@ -1,7 +1,7 @@
 {
 	"_version": "1.86.0",
 	"sap.app": {
-		"id": "com.vanstockprofile",
+		"id": "com.vanstockv2",
 		"type": "application",
 		"i18n": {
 			"bundleUrl": "i18n/i18n.properties",
@@ -77,7 +77,7 @@
 			"i18n": {
 				"type": "sap.ui.model.resource.ResourceModel",
 				"settings": {
-					"bundleName": "com.vanstockprofile.i18n.i18n",
+					"bundleName": "com.vanstockv2.i18n.i18n",
 					"supportedLocales": [
 						""
 					]
@@ -114,7 +114,7 @@
 					"target": "VanStockProfileList"
 				},
 				{
-					"pattern": "VanStockProfile({key}):?query:",
+					"pattern": "ProfileHeader({key}):?query:",
 					"name": "VanStockProfileObjectPage",
 					"target": "VanStockProfileObjectPage"
 				},
@@ -131,10 +131,10 @@
 					"name": "sap.fe.templates.ListReport",
 					"options": {
 						"settings": {
-							"contextPath": "/VanStockProfile",
+							"contextPath": "/ProfileHeader",
 							"variantManagement": "Page",
 							"navigation": {
-								"VanStockProfile": {
+								"ProfileHeader": {
 									"detail": {
 										"route": "VanStockProfileObjectPage"
 									}
@@ -147,14 +147,14 @@
 									},
 									"actions": {
 										"VanStockProfileList": {
-											"press": "com.vanstockprofile.ext.controller.VanStockProfileList.uploadProfile",
+											"press": "com.vanstockv2.ext.controller.VanStockProfileList.uploadProfile",
 											"visible": true,
 											"enabled": true,
 											"requiresSelection": false,
 											"text": "Upload Profile"
 										},
 										"UploadProfileViaProcedure": {
-											"press": "com.vanstockprofile.ext.controller.VanStockProfileList.uploadProfileViaProcedure",
+											"press": "com.vanstockv2.ext.controller.VanStockProfileList.uploadProfileViaProcedure",
 											"visible": true,
 											"enabled": true,
 											"requiresSelection": false,
@@ -173,7 +173,7 @@
 					"options": {
 						"settings": {
 							"editableHeaderContent": false,
-							"contextPath": "/VanStockProfile"
+							"contextPath": "/ProfileHeader"
 						}
 					}
 				},
@@ -194,7 +194,7 @@
 									},
 									"actions": {
 										"PostProfiles": {
-											"press": "com.vanstockprofile.ext.controller.UploadLogList.postProfiles",
+											"press": "com.vanstockv2.ext.controller.UploadLogList.postProfiles",
 											"visible": false,
 											"enabled": true,
 											"requiresSelection": false,
@@ -221,6 +221,6 @@
 	},
 	"sap.cloud": {
 		"public": true,
-		"service": "vanstockprofile.service"
+		"service": "vanstockv2.service"
 	}
 }

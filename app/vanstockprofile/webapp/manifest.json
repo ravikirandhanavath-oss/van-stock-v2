@@ -1,7 +1,7 @@
 {
   "_version": "1.86.0",
   "sap.app": {
-    "id": "com.vanstockprofile",
+    "id": "com.vanstockv2",
     "type": "application",
     "i18n": "i18n/i18n.properties",
     "applicationVersion": {
@@ -72,7 +72,7 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "com.vanstockprofile.i18n.i18n"
+          "bundleName": "com.vanstockv2.i18n.i18n"
         }
       },
       "": {
@@ -134,14 +134,14 @@
                   },
                   "actions": {
                     "VanStockProfileList": {
-                      "press": "com.vanstockprofile.ext.controller.VanStockProfileList.uploadProfile",
+                      "press": "com.vanstockv2.ext.controller.VanStockProfileList.uploadProfile",
                       "visible": true,
                       "enabled": true,
                       "requiresSelection": false,
                       "text": "Upload Profile"
                     },
                     "UploadProfileViaProcedure": {
-                      "press": "com.vanstockprofile.ext.controller.VanStockProfileList.uploadProfileViaProcedure",
+                      "press": "com.vanstockv2.ext.controller.VanStockProfileList.uploadProfileViaProcedure",
                       "visible": true,
                       "enabled": true,
                       "requiresSelection": false,
@@ -181,7 +181,7 @@
                   },
                   "actions": {
                     "PostProfiles": {
-                      "press": "com.vanstockprofile.ext.controller.UploadLogList.postProfiles",
+                      "press": "com.vanstockv2.ext.controller.UploadLogList.postProfiles",
                       "visible": false,
                       "enabled": true,
                       "requiresSelection": false,
@@ -207,6 +207,6 @@
   },
   "sap.cloud": {
     "public": true,
-    "service": "vanstockprofile.service"
+    "service": "vanstockv2.service"
   }
 }

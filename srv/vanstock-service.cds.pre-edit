@@ -7,7 +7,6 @@ using from '../db/uploadlog';
 service VanStockProfile {
     entity VanStockProfile as projection on vanstock.VanStockProfiles;
     entity UploadLog       as projection on vanstock.UploadLogs;
-    @odata.draft.enabled
     entity ProfileHeader   as projection on vanstock.VanStockProfileHeader;
     entity ProfileLine     as projection on vanstock.VanStockProfileLine;
     entity ChangeLog       as projection on vanstock.ChangeLogs;

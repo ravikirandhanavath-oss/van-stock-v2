@@ -2,7 +2,7 @@
 
 specVersion: "4.0"
 metadata:
-  name: com.vanstockprofile
+  name: com.vanstockv2
 type: application
 builder:
   resources:
@@ -20,7 +20,7 @@ builder:
     - name: ui5-task-zipper
       afterTask: generateCachebusterInfo
       configuration:
-        archiveName: comvanstockprofile
+        archiveName: comvanstockv2
         relativePaths: true
         additionalFiles:
           - xs-app.json

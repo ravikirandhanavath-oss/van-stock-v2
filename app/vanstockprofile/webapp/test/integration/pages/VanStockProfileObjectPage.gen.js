@@ -32,7 +32,7 @@ sap.ui.define(['sap/fe/test/ObjectPage', 'sap/ui/test/actions/Press'], function(
 
     return new ObjectPage(
         {
-            appId: 'com.vanstockprofile',
+            appId: 'com.vanstockv2',
             componentId: 'VanStockProfileObjectPage',
             contextPath: '/VanStockProfile'
         },

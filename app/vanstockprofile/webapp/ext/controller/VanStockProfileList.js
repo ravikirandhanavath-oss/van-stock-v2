@@ -97,7 +97,7 @@ sap.ui.define([
         sap.ui.core.Component.registry.forEach(function (oComp) {           
             if (!oComponent && oComp.getManifestEntry) {
                 var oAppInfo = oComp.getManifestEntry("sap.app");
-                if (oAppInfo && oAppInfo.id === "com.vanstockprofile") {
+                if (oAppInfo && oAppInfo.id === "com.vanstockv2") {
                     oComponent = oComp;
                     oModel = oComp.getModel();
                 }
@@ -242,7 +242,7 @@ sap.ui.define([
 
             Fragment.load({
                 id: sFragmentId,
-                name: "com.vanstockprofile.ext.fragment.ExcelUpload",
+                name: "com.vanstockv2.ext.fragment.ExcelUpload",
                 controller: oHandlers
             }).then(function (oLoadedDialog) {
                 oDialog = oLoadedDialog;

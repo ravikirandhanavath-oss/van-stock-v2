@@ -25,7 +25,7 @@ sap.ui.define(['sap/fe/test/ListReport'], function(ListReport) {
 
     return new ListReport(
         {
-            appId: 'com.vanstockprofile',
+            appId: 'com.vanstockv2',
             componentId: 'VanStockProfileList',
             contextPath: '/VanStockProfile'
         },

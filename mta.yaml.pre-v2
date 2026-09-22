@@ -43,7 +43,6 @@ modules:
       forwardAuthToken: true
       name: srv-api
       url: ~{srv-url}
-      timeout: 600000
   - name: van-stock-v2-auth
   - name: van-stock-v2-html5-runtime
   - name: van-stock-v2-destination

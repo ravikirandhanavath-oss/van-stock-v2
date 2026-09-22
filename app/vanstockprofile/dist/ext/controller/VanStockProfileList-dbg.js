@@ -94,10 +94,13 @@ sap.ui.define([
     function findModelAndComponent() {
         var oModel = null;
         var oComponent = null;
-        sap.ui.core.Component.registry.forEach(function (oComp) {
-            if (!oModel && oComp.getModel && oComp.getModel()) {
-                oModel = oComp.getModel();
-                oComponent = oComp;
+        sap.ui.core.Component.registry.forEach(function (oComp) {           
+            if (!oComponent && oComp.getManifestEntry) {
+                var oAppInfo = oComp.getManifestEntry("sap.app");
+                if (oAppInfo && oAppInfo.id === "com.vanstockv2") {
+                    oComponent = oComp;
+                    oModel = oComp.getModel();
+                }
             }
         });
         return { oModel: oModel, oComponent: oComponent };
@@ -126,7 +129,7 @@ sap.ui.define([
 
                 var oFile = oSelectedFile;
                 var oFound = findModelAndComponent();
-
+                console.log("Found component:", oFound.oComponent, "has router:", !!(oFound.oComponent && oFound.oComponent.getRouter));
                 if (!oFound.oModel) {
                     MessageToast.show("Could not find OData model on control");
                     return;
@@ -239,15 +242,15 @@ sap.ui.define([
 
             Fragment.load({
                 id: sFragmentId,
-                name: "com.vanstockprofile.ext.fragment.ExcelUpload",
+                name: "com.vanstockv2.ext.fragment.ExcelUpload",
                 controller: oHandlers
             }).then(function (oLoadedDialog) {
                 oDialog = oLoadedDialog;
-                 // Procedure flow doesn't support full-stream mode — hide that option
-        if (sFragmentId === "excelUploadFragmentProc") {
-            var oFullStreamRadio = Fragment.byId(sFragmentId, "fullStreamModeRadio");
-            if (oFullStreamRadio) { oFullStreamRadio.setVisible(false); }
-        }
+                // Procedure flow doesn't support full-stream mode — hide that option
+                if (sFragmentId === "excelUploadFragmentProc") {
+                    var oFullStreamRadio = Fragment.byId(sFragmentId, "fullStreamModeRadio");
+                    if (oFullStreamRadio) { oFullStreamRadio.setVisible(false); }
+                }
                 oDialog.open();
             });
         };

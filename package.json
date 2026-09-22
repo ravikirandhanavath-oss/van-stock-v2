@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "cds-serve",
-    "watch-vanstockprofile": "cds watch --open com.vanstockprofile/index.html?sap-ui-xx-viewCache=false --livereload false",
+    "watch-vanstockprofile": "cds watch --open com.vanstockv2/index.html?sap-ui-xx-viewCache=false --livereload false",
     "undeploy": "cf undeploy van-stock-profile --delete-services --delete-service-keys --delete-service-brokers",
     "build": "rimraf resources mta_archives && mbt build --mtar archive",
     "deploy": "cf deploy mta_archives/archive.mtar --retries 1"

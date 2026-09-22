@@ -35,10 +35,10 @@ modules:
     build-result: resources
     requires:
     - artifacts:
-      - comvanstockprofile.zip
-      name: comvanstockprofile
+      - comvanstockv2.zip
+      name: comvanstockv2
       target-path: resources/
-- name: comvanstockprofile
+- name: comvanstockv2
   type: html5
   path: app/vanstockprofile
   build-parameters:

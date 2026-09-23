@@ -2,7 +2,7 @@ const cds = require("@sap/cds");
 const ExcelJS = require('exceljs');
 const { Readable } = require('stream');
 const { loadLookups, validateRow } = require('./lib/validation');
-const { upsertProfileLine, upsertProfileLines } = require('./lib/profileWriter');
+const { upsertProfileLine } = require('./lib/profileWriter');
 
 const RESULT_SET_SIZE = 10000; // collect exactly this many rows before processing
 
@@ -32,16 +32,8 @@ async function processExcelStream(buffer, oLookups, UploadLog, ProfileHeader, Pr
     const dUploadedOn = new Date();
 
     let aResultSet = [];
-    let aPendingLines = [];
 
     async function processAndClearResultSet() {
-        if (aPendingLines.length > 0) {
-            await upsertProfileLines({
-                ProfileHeader, ProfileLine, ChangeLog,
-                rows: aPendingLines, userId: sUploadedBy
-            });
-            aPendingLines = [];
-        }
         if (aResultSet.length === 0) {
             return;
         }
@@ -74,13 +66,15 @@ async function processExcelStream(buffer, oLookups, UploadLog, ProfileHeader, Pr
 
             if (oResult.isValid) {
                 iSuccessCount++;
-                aPendingLines.push({
+                await upsertProfileLine({
+                    ProfileHeader, ProfileLine, ChangeLog,
                     engineerId: String(engineerId),
                     businessUnit: String(profitCenter),
                     productGroup: '', productStatus: '',
                     partNumber: String(partNumber),
                     quantity: Number(quantity), baseUOM: '',
-                    value: Number(value)
+                    value: Number(value),
+                    userId: sUploadedBy
                 });
             } else {
                 iFailCount++;
@@ -132,17 +126,9 @@ async function processExcelFullStream(buffer, oLookups, UploadLog, ProfileHeader
     const dUploadedOn = new Date();
 
     let aLogResultSet = [];
-    let aPendingLines = [];
     //let aProfileResultSet = [];removed — no longer batching into flat table
 
     async function flushResultSets() {
-        if (aPendingLines.length > 0) {
-            await upsertProfileLines({
-                ProfileHeader, ProfileLine, ChangeLog,
-                rows: aPendingLines, userId: sUploadedBy
-            });
-            aPendingLines = [];
-        }
         if (aLogResultSet.length > 0) {
             await INSERT.into(UploadLog).entries(aLogResultSet);
             aLogResultSet = [];
@@ -178,13 +164,15 @@ async function processExcelFullStream(buffer, oLookups, UploadLog, ProfileHeader
 
             if (oResult.isValid) {
                 iSuccessCount++;
-                aPendingLines.push({
+                 await upsertProfileLine({
+                    ProfileHeader, ProfileLine, ChangeLog,
                     engineerId: String(engineerId),
                     businessUnit: String(profitCenter),
                     productGroup: '', productStatus: '',
                     partNumber: String(partNumber),
                     quantity: Number(quantity), baseUOM: '',
-                    value: Number(value)
+                    value: Number(value),
+                    userId: sUploadedBy
                 });
             } else {
                 iFailCount++;
@@ -338,18 +326,18 @@ module.exports = cds.service.impl(function () {
             return;
         }
 
-        await upsertProfileLines({
-            ProfileHeader, ProfileLine, ChangeLog,
-            userId: req.user ? req.user.id : 'unknown',
-            rows: aToPost.map((oLog) => ({
+        for (const oLog of aToPost) {
+            await upsertProfileLine({
+                ProfileHeader, ProfileLine, ChangeLog,
                 engineerId: oLog.engineerId,
                 businessUnit: oLog.profitCenter,
                 productGroup: '', productStatus: '',
                 partNumber: oLog.partNumber,
                 quantity: oLog.quantity, baseUOM: '',
-                value: oLog.value
-            }))
-        });
+                value: oLog.value,
+                userId: req.user ? req.user.id : 'unknown'
+            });
+        }
 
         await UPDATE(UploadLog).set({ posted: true }).where({ ID: { in: aToPost.map(e => e.ID) } });
 
@@ -375,7 +363,6 @@ module.exports = cds.service.impl(function () {
         try {
             const oLookups = await loadLookups();
             const aLogEntries = [];
-            const aPendingLines = [];
 
             for (const oRawRow of rows) {
                 const oResult = validateRow(oRawRow, oLookups);
@@ -396,7 +383,8 @@ module.exports = cds.service.impl(function () {
                 });
 
                 if (oResult.isValid) {
-                    aPendingLines.push({
+                    await upsertProfileLine({
+                        ProfileHeader, ProfileLine, ChangeLog,
                         engineerId: oRawRow.engineerId,
                         businessUnit: oRawRow.profitCenter,
                         productGroup: '',
@@ -404,15 +392,11 @@ module.exports = cds.service.impl(function () {
                         partNumber: oRawRow.partNumber,
                         quantity: oRawRow.quantity,
                         baseUOM: '',
-                        value: oRawRow.value
+                        value: oRawRow.value,
+                        userId: sUploadedBy
                     });
                 }
             }
-
-            await upsertProfileLines({
-                ProfileHeader, ProfileLine, ChangeLog,
-                rows: aPendingLines, userId: sUploadedBy
-            });
 
             await INSERT.into(UploadLog).entries(aLogEntries);
 
@@ -438,18 +422,18 @@ module.exports = cds.service.impl(function () {
             return { message: "No unposted successful rows found", postedCount: 0 };
         }
 
-        await upsertProfileLines({
-            ProfileHeader, ProfileLine, ChangeLog,
-            userId: req.user ? req.user.id : 'unknown',
-            rows: aToPost.map((oLog) => ({
+        for (const oLog of aToPost) {
+            await upsertProfileLine({
+                ProfileHeader, ProfileLine, ChangeLog,
                 engineerId: oLog.engineerId,
                 businessUnit: oLog.profitCenter,
                 productGroup: '', productStatus: '',
                 partNumber: oLog.partNumber,
                 quantity: oLog.quantity, baseUOM: '',
-                value: oLog.value
-            }))
-        });
+                value: oLog.value,
+                userId: req.user ? req.user.id : 'unknown'
+            });
+        }
 
         await UPDATE(UploadLog).set({ posted: true }).where({ status: 'Success', posted: false });
 

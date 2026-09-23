@@ -144,10 +144,18 @@ async function upsertProfileLines({ ProfileHeader, ProfileLine, ChangeLog, rows,
                 ID: cds.utils.uuid(),
                 changeDate: sDate, changeTime: sTime, userId, engineerId: sEngineerId,
                 transactionType: 'AD',
-                beforeQuantity: nBeforeQty, beforeValue: nBeforeVal,
+                beforeBusinessUnit: oHeader.businessUnit,
+                beforeProductGroup: oExisting.productGroup,
+                beforeProductStatus: oExisting.productStatus,
                 beforePartNumber: sPartNumber,
+                beforeQuantity: nBeforeQty, beforeValue: nBeforeVal,
+                beforeBaseUOM: oExisting.baseUOM,
+                afterBusinessUnit: oHeader.businessUnit,
+                afterProductGroup: oExisting.productGroup,
+                afterProductStatus: oExisting.productStatus,
+                afterPartNumber: sPartNumber,
                 afterQuantity: nNewQty, afterValue: nNewVal,
-                afterPartNumber: sPartNumber
+                afterBaseUOM: oExisting.baseUOM
             });
         }
     }

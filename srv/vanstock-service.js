@@ -3,6 +3,8 @@ const ExcelJS = require('exceljs');
 const { Readable } = require('stream');
 const { loadLookups, validateRow } = require('./lib/validation');
 const { upsertProfileLine, upsertProfileLines } = require('./lib/profileWriter');
+const { logDraftActivate, logProfileDelete } = require('./lib/changeLogWriter');
+const { processReturns, processLeavers } = require('./lib/scenarioWriter');
 
 const RESULT_SET_SIZE = 10000; // collect exactly this many rows before processing
 
@@ -232,6 +234,16 @@ async function processExcelFullStream(buffer, oLookups, UploadLog, ProfileHeader
 
 
 module.exports = cds.service.impl(function () {
+    // ===== Enable On Select: Object Page lines locked until selected
+    require('./lib/lineSelect')(this);
+
+    // ===== Change log: Object Page edits (draft Save) and profile deletes
+    this.before('SAVE', 'ProfileHeader', logDraftActivate);
+    this.before('DELETE', 'ProfileHeader', async (req) => {
+        if (req.target && req.target.name && req.target.name.endsWith('.drafts')) return;
+        await logProfileDelete(req);
+    });
+
     const { VanStockProfile, UploadLog, ProfileHeader, ProfileLine, ChangeLog, ArchiveHeader, ArchiveLine } = this.entities;
     // const { VanStockProfile, UploadLog } = this.entities;
     //commented code without batchId
@@ -510,6 +522,35 @@ module.exports = cds.service.impl(function () {
         });
     });
     //Process Return
+    // ============================
+    // Upload Profile - RETURN / LEAVER scenarios (bulk, set-based)
+    // ============================
+    this.on('uploadReturns', async (req) => {
+        const { rows } = req.data;
+        if (!rows || rows.length === 0) {
+            req.error(400, "No rows provided");
+            return;
+        }
+        try {
+            return await processReturns({ rows, userId: req.user ? req.user.id : 'unknown' });
+        } catch (oError) {
+            req.error(500, `Return upload failed: ${oError.message}`);
+        }
+    });
+
+    this.on('uploadLeavers', async (req) => {
+        const { rows } = req.data;
+        if (!rows || rows.length === 0) {
+            req.error(400, "No rows provided");
+            return;
+        }
+        try {
+            return await processLeavers({ rows, userId: req.user ? req.user.id : 'unknown' });
+        } catch (oError) {
+            req.error(500, `Leaver upload failed: ${oError.message}`);
+        }
+    });
+
     this.on('processReturn', async (req) => {
         const { engineerId, partNumber, quantity } = req.data;
         const sUserId = req.user ? req.user.id : 'unknown';

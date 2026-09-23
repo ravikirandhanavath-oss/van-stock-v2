@@ -16,6 +16,13 @@
                     placeholder="Choose Excel file..."
                     change=".onFileChange" />
 
+                <Label id="scenarioLabel" text="Scenario" design="Bold" class="sapUiSmallMarginTop" />
+                <RadioButtonGroup id="scenarioGroup" columns="2" select=".onScenarioSelect">
+                    <RadioButton id="scenarioReturnRadio" text="Return" selected="true" />
+                    <RadioButton id="scenarioLeaverRadio" text="Leaver" />
+                </RadioButtonGroup>
+                <Text id="scenarioHint" class="sapUiTinyMarginTop" text="Columns: Engineer ID | Profit Center | Part Number | Quantity | Value" />
+                <Label id="uploadModeLabel" text="Upload Mode" design="Bold" class="sapUiSmallMarginTop" />
                 <RadioButtonGroup id="uploadModeGroup" columns="1" class="sapUiSmallMarginTop">
                     <RadioButton id="chunkModeRadio" text="Upload in chunks" selected="true" />
                     <RadioButton id="noChunkModeRadio" text="Upload entire file in one request" />

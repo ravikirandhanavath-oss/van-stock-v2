@@ -113,6 +113,12 @@ annotate service.ProfileHeader with @(
             ID     : 'LineItemsFacet',
             Label  : 'Line Items',
             Target : 'lines/@UI.LineItem'
+        },
+        {
+            $Type  : 'UI.ReferenceFacet',
+            ID     : 'ChangeLogFacet',
+            Label  : 'Change Log',
+            Target : 'changeLogs/@UI.LineItem'
         }
     ]
 );

@@ -7,6 +7,55 @@ sap.ui.define([
 
     var CHUNK_SIZE = 2000; // bumped up from 500 — test and adjust further if needed
 
+    // ===== ExcelJS: loaded on demand from the app (ext/lib), CDN as fallback.
+    // index.html is not used in FLP preview / Work Zone, so a <script> tag
+    // there is not enough.
+    var pExcelJS = null;
+    function loadScript(sUrl) {
+        return new Promise(function (resolve, reject) {
+            var fnDefine = window.define;            // UMD must not see an AMD define
+            window.define = undefined;
+            var oScript = document.createElement("script");
+            oScript.src = sUrl;
+            oScript.onload = function () { window.define = fnDefine; resolve(); };
+            oScript.onerror = function () { window.define = fnDefine; reject(new Error("Could not load " + sUrl)); };
+            document.head.appendChild(oScript);
+        });
+    }
+    function ensureExcelJS(oComponent) {
+        if (typeof window.ExcelJS !== "undefined") { return Promise.resolve(); }
+        if (!pExcelJS) {
+            var sNs = oComponent && oComponent.getManifestEntry
+                ? oComponent.getManifestEntry("sap.app").id.replace(/\./g, "/") : "";
+            var sLocal = sap.ui.require.toUrl(sNs + "/ext/lib/exceljs.min.js");
+            pExcelJS = loadScript(sLocal).catch(function () {
+                return loadScript("https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js");
+            }).then(function () {
+                if (typeof window.ExcelJS === "undefined") {
+                    throw new Error("Excel reader (ExcelJS) could not be loaded");
+                }
+            }).catch(function (e) { pExcelJS = null; throw e; });
+        }
+        return pExcelJS;
+    }
+
+    // ===== Upload scenarios: Profile (default) / Return / Leaver =====
+    var SCENARIO_ACTIONS = { RETURN: "uploadReturns", LEAVER: "uploadLeavers" };
+    var SCENARIO_LABELS = { RETURN: "[Return] ", LEAVER: "[Leaver] " };
+    var SCENARIO_HINTS = {
+        PROFILE: "Columns: Engineer ID | Profit Center | Part Number | Quantity | Value",
+        RETURN: "Return (not leaver): Engineer ID (A) | Part Number (C) | Quantity (D) | Value (E, optional - MAP used if blank)",
+        LEAVER: "Leaver: Engineer ID (A) | Part Number (C) | Quantity (D) | Value (E). Remaining stock is written off and the profile closed. A row with only Engineer ID = full write-off."
+    };
+
+    function getScenario(sFragmentId) {
+        var oReturn = Fragment.byId(sFragmentId, "scenarioReturnRadio");
+        var oLeaver = Fragment.byId(sFragmentId, "scenarioLeaverRadio");
+        if (oReturn && oReturn.getVisible() && oReturn.getSelected()) { return "RETURN"; }
+        if (oLeaver && oLeaver.getVisible() && oLeaver.getSelected()) { return "LEAVER"; }
+        return "PROFILE";
+    }
+
     function parseExcelFile(oFile) {
         return oFile.arrayBuffer().then(function (arrayBuffer) {
             var workbook = new ExcelJS.Workbook();
@@ -33,8 +82,8 @@ sap.ui.define([
                     engineerId: engineerId ? String(engineerId) : null,
                     profitCenter: profitCenter ? String(profitCenter) : null,
                     partNumber: partNumber ? String(partNumber) : null,
-                    quantity: isNaN(Number(quantity)) ? null : Number(quantity),
-                    value: isNaN(Number(value)) ? null : Number(value)
+                    quantity: (quantity === null || quantity === undefined || quantity === "" || isNaN(Number(quantity))) ? null : Number(quantity),
+                    value: (value === null || value === undefined || value === "" || isNaN(Number(value))) ? null : Number(value)
                 });
             });
 
@@ -121,6 +170,20 @@ sap.ui.define([
                 MessageToast.show("File selected: " + oSelectedFile.name);
             },
 
+            onScenarioSelect: function () {
+                var sScenario = getScenario(sFragmentId);
+                var oFullStreamRadio = Fragment.byId(sFragmentId, "fullStreamModeRadio");
+                var oChunkRadio = Fragment.byId(sFragmentId, "chunkModeRadio");
+                var oHint = Fragment.byId(sFragmentId, "scenarioHint");
+                if (oFullStreamRadio && sFragmentId !== "excelUploadFragmentProc") {
+                    oFullStreamRadio.setVisible(sScenario === "PROFILE");
+                    if (sScenario !== "PROFILE" && oFullStreamRadio.getSelected() && oChunkRadio) {
+                        oChunkRadio.setSelected(true);
+                    }
+                }
+                if (oHint) { oHint.setText(SCENARIO_HINTS[sScenario]); }
+            },
+
             onUpload: function () {
                 if (!oSelectedFile) {
                     MessageToast.show("Please select an Excel file first");
@@ -140,6 +203,11 @@ sap.ui.define([
 
                 var bNoChunk = !!(oNoChunkRadio && oNoChunkRadio.getSelected());
                 var bFullStream = !!(oFullStreamRadio && oFullStreamRadio.getSelected());
+
+                var sScenario = getScenario(sFragmentId);
+                var sEffectiveAction = SCENARIO_ACTIONS[sScenario] || sActionName;
+                var sEffectiveLabel = SCENARIO_LABELS[sScenario] || sLabelPrefix;
+                if (sScenario !== "PROFILE") { bFullStream = false; }
 
                 var dStart = Date.now();
                 oDialog.setBusy(true);
@@ -190,14 +258,10 @@ sap.ui.define([
 
                 } else {
                     // ===== CHUNK or NO-CHUNK (JSON, browser-parsed) — existing logic =====
-                    if (typeof ExcelJS === 'undefined') {
-                        oDialog.setBusy(false);
-                        MessageToast.show("ExcelJS library not loaded — check index.html");
-                        return;
-                    }
-
-                    parseExcelFile(oFile).then(function (aAllRows) {
-                        return sendRows(oFound.oModel, sActionName, aAllRows, sLabelPrefix, bNoChunk);
+                    ensureExcelJS(oFound.oComponent).then(function () {
+                        return parseExcelFile(oFile);
+                    }).then(function (aAllRows) {
+                        return sendRows(oFound.oModel, sEffectiveAction, aAllRows, sEffectiveLabel, bNoChunk);
                     }).then(function (oSummary) {
                         var iDurationMs = Date.now() - dStart;
                         oDialog.setBusy(false);
@@ -208,7 +272,7 @@ sap.ui.define([
                             oSummary.successCount + " row(s) passed, " + oSummary.failCount + " row(s) failed.\n" +
                             "Completed in " + iDurationMs + "ms.",
                             {
-                                title: sLabelPrefix + "Upload Complete",
+                                title: sEffectiveLabel + "Upload Complete",
                                 onClose: function () {
                                     if (oFound.oComponent && oFound.oComponent.getRouter) {
                                         oFound.oComponent.getRouter().navTo("UploadLogList");
@@ -246,10 +310,20 @@ sap.ui.define([
                 controller: oHandlers
             }).then(function (oLoadedDialog) {
                 oDialog = oLoadedDialog;
+                oHandlers.onScenarioSelect();
                 // Procedure flow doesn't support full-stream mode — hide that option
                 if (sFragmentId === "excelUploadFragmentProc") {
                     var oFullStreamRadio = Fragment.byId(sFragmentId, "fullStreamModeRadio");
                     if (oFullStreamRadio) { oFullStreamRadio.setVisible(false); }
+                    // Return / Leaver scenarios run through the Node.js dialog only
+                    ["scenarioLabel", "scenarioGroup", "scenarioHint", "uploadModeLabel"].forEach(function (sId) {
+                        var oCtrl = Fragment.byId(sFragmentId, sId);
+                        if (oCtrl) { oCtrl.setVisible(false); }
+                    });
+                    ["scenarioReturnRadio", "scenarioLeaverRadio"].forEach(function (sId) {
+                        var oCtrl = Fragment.byId(sFragmentId, sId);
+                        if (oCtrl) { oCtrl.setVisible(false); }
+                    });
                 }
                 oDialog.open();
             });

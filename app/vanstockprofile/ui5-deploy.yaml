@@ -5,6 +5,12 @@ metadata:
   name: com.vanstockv2
 type: application
 builder:
+  componentPreload:
+    excludes:
+      - "com/vanstockv2/ext/lib/**"
+  minification:
+    excludes:
+      - "com/vanstockv2/ext/lib/**"
   resources:
     excludes:
       - /test/**

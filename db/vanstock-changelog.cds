@@ -21,6 +21,6 @@ entity ChangeLogs {
         afterProductStatus  : String(10);
         afterPartNumber     : String(40);
         afterQuantity       : Decimal(13,3);
-        afterBaseUOM        : String(3);
+        afterBaseUOM         : String(3);
         afterValue          : Decimal(15,2);
 }

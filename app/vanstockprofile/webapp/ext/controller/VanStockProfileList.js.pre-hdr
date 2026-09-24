@@ -56,38 +56,6 @@ sap.ui.define([
         return "PROFILE";
     }
 
-    // Columns are found by their header text (row 1), so files with fewer
-    // columns work too, e.g. engineerId | partNumber | quantity.
-    // No recognised headers -> fixed layout A..E as before.
-    var HEADER_NAMES = {
-        engineerId: ["engineerid", "engineer", "engineerno", "engineernumber"],
-        profitCenter: ["profitcenter", "businessunit", "pc", "bu"],
-        partNumber: ["partnumber", "part", "partno", "material", "materialnumber"],
-        quantity: ["quantity", "qty"],
-        value: ["value", "amount"]
-    };
-    function mapColumns(oHeaderRow) {
-        var mCol = {};
-        oHeaderRow.eachCell(function (oCell, iCol) {
-            var sName = String(oCell.text || "").toLowerCase().replace(/[^a-z]/g, "");
-            Object.keys(HEADER_NAMES).forEach(function (sField) {
-                if (!mCol[sField] && HEADER_NAMES[sField].indexOf(sName) >= 0) { mCol[sField] = iCol; }
-            });
-        });
-        if (!mCol.engineerId || !(mCol.partNumber || mCol.quantity)) {
-            return { engineerId: 1, profitCenter: 2, partNumber: 3, quantity: 4, value: 5 };
-        }
-        return mCol;
-    }
-    function cellValue(oRow, iCol) {
-        if (!iCol) { return null; }
-        var v = oRow.getCell(iCol).value;
-        if (v && typeof v === "object") {                 // formula / rich text / hyperlink
-            v = (v.result !== undefined) ? v.result : oRow.getCell(iCol).text;
-        }
-        return (typeof v === "string") ? v.trim() : v;
-    }
-
     function parseExcelFile(oFile) {
         return oFile.arrayBuffer().then(function (arrayBuffer) {
             var workbook = new ExcelJS.Workbook();
@@ -95,16 +63,15 @@ sap.ui.define([
         }).then(function (workbook) {
             var worksheet = workbook.worksheets[0];
             var aAllRows = [];
-            var mCol = mapColumns(worksheet.getRow(1));
 
             worksheet.eachRow(function (row, rowNumber) {
                 if (rowNumber === 1) return;
 
-                var engineerId = cellValue(row, mCol.engineerId);
-                var profitCenter = cellValue(row, mCol.profitCenter);
-                var partNumber = cellValue(row, mCol.partNumber);
-                var quantity = cellValue(row, mCol.quantity);
-                var value = cellValue(row, mCol.value);
+                var engineerId = row.getCell(1).value;
+                var profitCenter = row.getCell(2).value;
+                var partNumber = row.getCell(3).value;
+                var quantity = row.getCell(4).value;
+                var value = row.getCell(5).value;
 
                 if (!engineerId && !profitCenter && !partNumber && !quantity && !value) {
                     return;
